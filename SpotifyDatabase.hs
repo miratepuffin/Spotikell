@@ -1,4 +1,4 @@
-module SpotifyDatabase (addArtistToDB,createDatabase) where
+module SpotifyDatabase (addArtistToDB, addAlbumToDB, createDatabase) where
 
 import Control.Monad
 import Database.HDBC
@@ -41,6 +41,43 @@ addGenreToDB (genre:genres) artistPos conn = do
         addGenreToDB genres artistPos conn
         return ()
 
+addAlbumToDB:: [Album] -> String -> IO()
+addAlbumToDB albums artist = do
+    conn <- connectMySQL defaultMySQLConnectInfo {
+                  mysqlHost = "localhost",
+                  mysqlDatabase = "spotify",
+                  mysqlUser = "root",
+                  mysqlPassword = "1234",
+                  mysqlUnixSocket = "/var/run/mysqld/mysqld.sock" }
+    addAlbums albums artist conn
+    commit conn 
+    disconnect conn 
+    return ()
+
+addAlbums:: [Album] -> String -> Connection -> IO()
+addAlbums [] artist conn = return ()
+addAlbums (album:albums) artist conn = do
+    artistList <- quickQuery' conn "SELECT * FROM Artists WHERE artistName = ?" [toSql (artist)]
+    let artistId = fromSql $ head $ head $ artistList ::Int
+    let stmt = "INSERT INTO Albums (albumName,albumSpotifyID,albumArtist) VALUES (?, ?, ?)"
+    run conn stmt [toSql (albumName album),
+                   toSql (albumID album),
+                   toSql ((artistId)::Int)]
+    albumList <- quickQuery' conn "SELECT * FROM Albums WHERE albumSpotifyID = ?" [toSql (albumID album)]
+    let albumPos = (fromSql $ head $ head $ albumList ::Int)
+    addImagesToDB (albumImages album) albumPos conn
+    addAlbums albums artist conn
+    return ()
+
+addImagesToDB:: [Image] -> Int -> Connection -> IO()
+addImagesToDB [] albumPos conn = return ()
+addImagesToDB (image:images) albumPos conn = do
+    let stmt = "INSERT INTO Images (imageURL,height,width,albumID) VALUES (?,?,?,?)"
+    run conn stmt [toSql (imageurl image),
+                   toSql ((height image)::Int),
+                   toSql ((width image)::Int),
+                   toSql (albumPos::Int)]
+    addImagesToDB images albumPos conn
 
 
 
@@ -72,7 +109,6 @@ createAlbums conn = run conn (unlines ["CREATE TABLE IF NOT EXISTS `Albums` (",
                                        "`idAlbums` INT NOT NULL AUTO_INCREMENT,",
                                        "`albumName` VARCHAR(100) NOT NULL,",
                                        "`albumSpotifyID` VARCHAR(45) NOT NULL,",
-                                       "`albumImage` INT NOT NULL,",
                                        "`albumArtist` INT NOT NULL,",
                                        "PRIMARY KEY (`idAlbums`),",
                                        "INDEX `albumArtist_idx` (`albumArtist` ASC),",

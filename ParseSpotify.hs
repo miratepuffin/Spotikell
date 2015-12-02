@@ -19,9 +19,11 @@ searchForArtist artist = do
     resp <-simpleHTTP req                                                                     -- build request and send request to spotify api
     let body = rspBody $ fromRight resp                                                       -- extract the body of the message
     let decodeResult = decode body :: Maybe Info                                              -- parse into info object
-    let idExtract = drop 15 $ href' $ head $ artists $ fromJust decodeResult                  -- extract artist id which is utilised in FullArtist and Album URL
+    let topArtist = head $ artists $ fromJust decodeResult
+    let idExtract = drop 15 $ href' topArtist                                                 -- extract artist id which is utilised in FullArtist and Album URL
+    let artistName' = name' topArtist
     getFullArtist idExtract
-    getArtistAlbums idExtract
+    getArtistAlbums idExtract artistName'
 
 getFullArtist :: String -> IO ()
 getFullArtist artistID = do
@@ -31,12 +33,12 @@ getFullArtist artistID = do
     let body = responseBody resp
     let decodeResult = fromJust (decode body :: Maybe FullArtist)
     addArtistToDB  decodeResult
-    print "Finished getting Artist information"
+    print "Finished saving Artist information"
     --return (fromJust decodeResult) 
 
 
-getArtistAlbums :: String -> IO ()
-getArtistAlbums artistID = do
+getArtistAlbums :: String -> String -> IO ()
+getArtistAlbums artistID artistName' = do
     req <- parseUrl ("https://api.spotify.com/v1/artists/"++artistID++"/albums?album_type=album")
     let settings = mkManagerSettings (TLSSettingsSimple True False False) Nothing
     resp <-withManagerSettings settings $ httpLbs req
@@ -44,8 +46,8 @@ getArtistAlbums artistID = do
     let decodeResult = decode body :: Maybe Albums
     let albumList = fromJust decodeResult
     let uniqueAlbums = removeDoubles "" $ albums albumList
-    --return albumList
-    print "Finished getting album information"
+    addAlbumToDB uniqueAlbums artistName'
+    print "Finished saving album information"
     getTracks (uniqueAlbums)
 
 getTracks:: [Album] -> IO ()
