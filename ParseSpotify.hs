@@ -9,6 +9,7 @@ import Data.Either
 import Data.Either.Extra
 import SpotifyDataTypes
 import SpotifyDatabase
+import SpotifyDatabaseCreate
 import Data.Aeson
 
 
@@ -67,6 +68,8 @@ getTracks (album:albums) = do
     --print $ trackName $ head $ tracks $ tracklist
     print ("Finished saving track info for album: "++(albumName album))
     getTracks  albums
+
+
 
 urlify :: String -> String
 urlify [] = []
