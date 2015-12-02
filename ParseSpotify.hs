@@ -22,8 +22,11 @@ searchForArtist artist = do
     let topArtist = head $ artists $ fromJust decodeResult
     let idExtract = drop 15 $ href' topArtist                                                 -- extract artist id which is utilised in FullArtist and Album URL
     let artistName' = name' topArtist
-    getFullArtist idExtract
-    getArtistAlbums idExtract artistName'
+    artistInDB <- checkArtistInDB artistName'
+    if artistInDB then print "Artist already in Database!" 
+    else do
+        getFullArtist idExtract
+        getArtistAlbums idExtract artistName'
 
 getFullArtist :: String -> IO ()
 getFullArtist artistID = do

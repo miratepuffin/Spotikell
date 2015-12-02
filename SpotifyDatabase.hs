@@ -1,18 +1,22 @@
-module SpotifyDatabase (addArtistToDB, addAlbumToDB, addTracksToDB, createDatabase) where
+module SpotifyDatabase (checkArtistInDB,addArtistToDB, addAlbumToDB, addTracksToDB, createDatabase) where
 
 import Control.Monad
 import Database.HDBC
 import Database.HDBC.MySQL
 import SpotifyDataTypes
 
+checkArtistInDB:: String -> IO Bool
+checkArtistInDB stringID = do
+    conn <- connectMySQL mySQLInfo
+    genreList <- quickQuery' conn "SELECT * FROM Artists WHERE artistName = ?" [toSql stringID]
+    if (length genreList) == 0 then return False
+    else return True
+    
+
+
 addArtistToDB:: FullArtist -> IO ()
 addArtistToDB artist = do
-    conn <- connectMySQL defaultMySQLConnectInfo {
-                  mysqlHost = "localhost",
-                  mysqlDatabase = "spotify",
-                  mysqlUser = "root",
-                  mysqlPassword = "1234",
-                  mysqlUnixSocket = "/var/run/mysqld/mysqld.sock" }
+    conn <- connectMySQL mySQLInfo
     let stmt = "INSERT INTO Artists (artistName,artistSpotifyID,artistFollowers,artistPopularity) VALUES (?, ?, ?, ?)"
     run conn stmt [toSql (name artist),
                    toSql (identifier artist),
@@ -43,12 +47,7 @@ addGenreToDB (genre:genres) artistPos conn = do
 
 addAlbumToDB:: [Album] -> String -> IO ()
 addAlbumToDB albums artist = do
-    conn <- connectMySQL defaultMySQLConnectInfo {
-                  mysqlHost = "localhost",
-                  mysqlDatabase = "spotify",
-                  mysqlUser = "root",
-                  mysqlPassword = "1234",
-                  mysqlUnixSocket = "/var/run/mysqld/mysqld.sock" }
+    conn <- connectMySQL mySQLInfo
     addAlbums albums artist conn
     commit conn 
     disconnect conn 
@@ -81,12 +80,7 @@ addImagesToDB (image:images) albumPos conn = do
 
 addTracksToDB:: [Track] -> String -> IO ()
 addTracksToDB tracks albumId = do
-    conn <- connectMySQL defaultMySQLConnectInfo {
-                  mysqlHost = "localhost",
-                  mysqlDatabase = "spotify",
-                  mysqlUser = "root",
-                  mysqlPassword = "1234",
-                  mysqlUnixSocket = "/var/run/mysqld/mysqld.sock" }
+    conn <- connectMySQL mySQLInfo
     albumList <- quickQuery' conn "SELECT * FROM Albums WHERE albumSpotifyID = ?" [toSql (albumId)]
     let albumPos = (fromSql $ head $ head $ albumList ::Int)
     addTracks tracks albumPos conn
@@ -107,15 +101,17 @@ addTracks (track:tracks) albumPos conn = do
                    toSql (albumPos::Int)]
     addTracks tracks albumPos conn
 
-
+mySQLInfo :: MySQLConnectInfo
+mySQLInfo = defaultMySQLConnectInfo {
+  mysqlHost = "localhost",
+  mysqlDatabase = "spotify",
+  mysqlUser = "root",
+  mysqlPassword = "1234",
+  mysqlUnixSocket = "/var/run/mysqld/mysqld.sock" 
+}
 
 createDatabase = do
-    conn <- connectMySQL defaultMySQLConnectInfo {
-                mysqlHost = "localhost",
-                mysqlDatabase = "spotify",
-                mysqlUser = "root",
-                mysqlPassword = "1234",
-                mysqlUnixSocket = "/var/run/mysqld/mysqld.sock" }
+    conn <- connectMySQL mySQLInfo
     createArtist conn
     createAlbums conn
     createImages conn
