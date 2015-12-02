@@ -60,8 +60,9 @@ getTracks (album:albums) = do
     let body = responseBody resp
     let decodeResult = decode body :: Maybe Tracks
     let tracklist = fromJust decodeResult
+    addTracksToDB (tracks tracklist) albumNum
     --print $ trackName $ head $ tracks $ tracklist
-    print ("Finished getting track info for album: "++(albumName album))
+    print ("Finished saving track info for album: "++(albumName album))
     getTracks  albums
 
 urlify :: String -> String

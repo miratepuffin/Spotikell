@@ -1,4 +1,4 @@
-module SpotifyDatabase (addArtistToDB, addAlbumToDB, createDatabase) where
+module SpotifyDatabase (addArtistToDB, addAlbumToDB, addTracksToDB, createDatabase) where
 
 import Control.Monad
 import Database.HDBC
@@ -41,7 +41,7 @@ addGenreToDB (genre:genres) artistPos conn = do
         addGenreToDB genres artistPos conn
         return ()
 
-addAlbumToDB:: [Album] -> String -> IO()
+addAlbumToDB:: [Album] -> String -> IO ()
 addAlbumToDB albums artist = do
     conn <- connectMySQL defaultMySQLConnectInfo {
                   mysqlHost = "localhost",
@@ -54,7 +54,7 @@ addAlbumToDB albums artist = do
     disconnect conn 
     return ()
 
-addAlbums:: [Album] -> String -> Connection -> IO()
+addAlbums:: [Album] -> String -> Connection -> IO ()
 addAlbums [] artist conn = return ()
 addAlbums (album:albums) artist conn = do
     artistList <- quickQuery' conn "SELECT * FROM Artists WHERE artistName = ?" [toSql (artist)]
@@ -69,7 +69,7 @@ addAlbums (album:albums) artist conn = do
     addAlbums albums artist conn
     return ()
 
-addImagesToDB:: [Image] -> Int -> Connection -> IO()
+addImagesToDB:: [Image] -> Int -> Connection -> IO ()
 addImagesToDB [] albumPos conn = return ()
 addImagesToDB (image:images) albumPos conn = do
     let stmt = "INSERT INTO Images (imageURL,height,width,albumID) VALUES (?,?,?,?)"
@@ -79,15 +79,43 @@ addImagesToDB (image:images) albumPos conn = do
                    toSql (albumPos::Int)]
     addImagesToDB images albumPos conn
 
-
-
-createDatabase = do
+addTracksToDB:: [Track] -> String -> IO ()
+addTracksToDB tracks albumId = do
     conn <- connectMySQL defaultMySQLConnectInfo {
                   mysqlHost = "localhost",
                   mysqlDatabase = "spotify",
                   mysqlUser = "root",
                   mysqlPassword = "1234",
                   mysqlUnixSocket = "/var/run/mysqld/mysqld.sock" }
+    albumList <- quickQuery' conn "SELECT * FROM Albums WHERE albumSpotifyID = ?" [toSql (albumId)]
+    let albumPos = (fromSql $ head $ head $ albumList ::Int)
+    addTracks tracks albumPos conn
+    commit conn 
+    disconnect conn 
+    return ()
+
+addTracks:: [Track] -> Int -> Connection -> IO ()
+addTracks [] albumPos conn = return ()
+addTracks (track:tracks) albumPos conn = do
+    let stmt = "INSERT INTO Tracks (trackName,trackNum,trackSpotifyID,explicit,duration,previewURL,album) VALUES (?,?,?,?,?,?,?)"
+    run conn stmt [toSql ( trackName track),
+                   toSql ((trackNum  track)::Int),
+                   toSql ( trackId   track),
+                   toSql ((explicit  track)::Bool),
+                   toSql ((duration  track)::Int),
+                   toSql ( preview   track),
+                   toSql (albumPos::Int)]
+    addTracks tracks albumPos conn
+
+
+
+createDatabase = do
+    conn <- connectMySQL defaultMySQLConnectInfo {
+                mysqlHost = "localhost",
+                mysqlDatabase = "spotify",
+                mysqlUser = "root",
+                mysqlPassword = "1234",
+                mysqlUnixSocket = "/var/run/mysqld/mysqld.sock" }
     createArtist conn
     createAlbums conn
     createImages conn
