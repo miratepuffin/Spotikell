@@ -14,6 +14,7 @@ mySQLInfo = defaultMySQLConnectInfo {
   mysqlUnixSocket = "/var/run/mysqld/mysqld.sock" 
 }
 
+createDatabase :: IO ()
 createDatabase = do
     conn <- connectMySQL mySQLInfo
     createArtist conn
@@ -25,6 +26,7 @@ createDatabase = do
     commit conn
     disconnect conn
 
+createArtist:: Connection -> IO Integer
 createArtist conn = run conn (unlines ["CREATE TABLE IF NOT EXISTS `Artists` (",
                                        "`idArtists` INT NOT NULL AUTO_INCREMENT,",
                                        "`artistName` VARCHAR(100) NOT NULL,",
@@ -33,6 +35,7 @@ createArtist conn = run conn (unlines ["CREATE TABLE IF NOT EXISTS `Artists` (",
                                        "`artistPopularity` DECIMAL(2) NOT NULL,",
                                        "PRIMARY KEY (`idArtists`))"]) []
 
+createAlbums:: Connection -> IO Integer
 createAlbums conn = run conn (unlines ["CREATE TABLE IF NOT EXISTS `Albums` (",
                                        "`idAlbums` INT NOT NULL AUTO_INCREMENT,",
                                        "`albumName` VARCHAR(100) NOT NULL,",
@@ -46,6 +49,7 @@ createAlbums conn = run conn (unlines ["CREATE TABLE IF NOT EXISTS `Albums` (",
                                        "ON DELETE CASCADE",
                                        "ON UPDATE NO ACTION)"]) []
 
+createImages:: Connection -> IO Integer
 createImages conn = run conn (unlines ["CREATE TABLE IF NOT EXISTS `Images`(",
                                        "`idImages` INT NOT NULL AUTO_INCREMENT,",
                                        "`imageURL` VARCHAR(200) NOT NULL,",
@@ -60,11 +64,13 @@ createImages conn = run conn (unlines ["CREATE TABLE IF NOT EXISTS `Images`(",
                                        "ON DELETE CASCADE",
                                        "ON UPDATE NO ACTION)"]) []
 
+createGenres:: Connection -> IO Integer
 createGenres conn = run conn (unlines ["CREATE TABLE IF NOT EXISTS `Genres` (",
                                        "`idGenres` INT NOT NULL AUTO_INCREMENT,",
                                        "`genreName` VARCHAR(45) NOT NULL,",
                                        "PRIMARY KEY (`idGenres`))"]) []
 
+createTracks:: Connection -> IO Integer
 createTracks conn = run conn (unlines ["CREATE TABLE IF NOT EXISTS `Tracks` (",
                                        "`idTracks` INT NOT NULL AUTO_INCREMENT,",
                                        "`trackName` VARCHAR(100) NOT NULL,",
@@ -82,6 +88,7 @@ createTracks conn = run conn (unlines ["CREATE TABLE IF NOT EXISTS `Tracks` (",
                                        "ON DELETE CASCADE",
                                        "ON UPDATE NO ACTION)"]) []
 
+createArtGen:: Connection -> IO Integer
 createArtGen conn = run conn (unlines ["CREATE TABLE IF NOT EXISTS `ArtistGenres` (",
                                        "`idArtistGenres` INT NOT NULL AUTO_INCREMENT,",
                                        "`artist` INT NOT NULL,",

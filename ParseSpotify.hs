@@ -12,7 +12,6 @@ import SpotifyDatabase
 import SpotifyDatabaseCreate
 import Data.Aeson
 
-
 searchForArtist :: String -> IO ()
 searchForArtist artist = do
     let uri = fromJust $ parseURI ("http://ws.spotify.com/search/1/artist.json?q=" ++ (urlify artist)) --append the users search term to find artist
@@ -31,22 +30,17 @@ searchForArtist artist = do
 
 getFullArtist :: String -> IO ()
 getFullArtist artistID = do
-    req <- parseUrl ("https://api.spotify.com/v1/artists/" ++ artistID)
-    let settings = mkManagerSettings (TLSSettingsSimple True False False) Nothing
-    resp <-withManagerSettings settings $ httpLbs req
-    let body = responseBody resp
-    let decodeResult = fromJust (decode body :: Maybe FullArtist)
-    addArtistToDB  decodeResult
+    body <- getHTTPSbody ("https://api.spotify.com/v1/artists/" ++ artistID)
+    let decodeResult = decode body :: Maybe FullArtist
+    let artistData = fromJust decodeResult
+    addArtistToDB  artistData
     print "Finished saving Artist information"
     --return (fromJust decodeResult) 
 
 
 getArtistAlbums :: String -> String -> IO ()
 getArtistAlbums artistID artistName' = do
-    req <- parseUrl ("https://api.spotify.com/v1/artists/"++artistID++"/albums?album_type=album")
-    let settings = mkManagerSettings (TLSSettingsSimple True False False) Nothing
-    resp <-withManagerSettings settings $ httpLbs req
-    let body = responseBody resp
+    body <- getHTTPSbody ("https://api.spotify.com/v1/artists/"++artistID++"/albums?album_type=album") 
     let decodeResult = decode body :: Maybe Albums
     let albumList = fromJust decodeResult
     let uniqueAlbums = removeDoubles "" $ albums albumList
@@ -58,16 +52,21 @@ getTracks:: [Album] -> IO ()
 getTracks [] = return ()
 getTracks (album:albums) = do
     let albumNum = albumID album
-    req <- parseUrl ("https://api.spotify.com/v1/albums/"++albumNum++"/tracks")
-    let settings = mkManagerSettings (TLSSettingsSimple True False False) Nothing
-    resp <-withManagerSettings settings $ httpLbs req
-    let body = responseBody resp
+    body <- getHTTPSbody ("https://api.spotify.com/v1/albums/"++albumNum++"/tracks")
     let decodeResult = decode body :: Maybe Tracks
     let tracklist = fromJust decodeResult
     addTracksToDB (tracks tracklist) albumNum
     --print $ trackName $ head $ tracks $ tracklist
     print ("Finished saving track info for album: "++(albumName album))
     getTracks  albums
+
+--getHTTPSbody :: String -> Data.ByteString.Lazy.Internal.ByteString
+getHTTPSbody url = do
+    req <- parseUrl url
+    let settings = mkManagerSettings (TLSSettingsSimple True False False) Nothing
+    resp <-withManagerSettings settings $ httpLbs req
+    let body = responseBody resp
+    return body
 
 
 
