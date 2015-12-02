@@ -19,10 +19,10 @@ data BasicArtist = BasicArtist {
 
 data FullArtist = FullArtist {
   followers   ::  Int,
-  genres      ::  [Text],
-  identifier  ::  Text,
-  name        ::  Text,
-  popularity  ::  Int
+  genres      ::  [String],
+  identifier  ::  String,
+  name        ::  String,
+  popularity  ::  Double
 } deriving Show
 
 data Albums = Albums {

@@ -8,9 +8,11 @@ import Data.Maybe
 import Data.Either
 import Data.Either.Extra
 import SpotifyDataTypes
+import SpotifyDatabase
 import Data.Aeson
 
-searchForArtist :: String -> IO Tracks
+
+searchForArtist :: String -> IO ()
 searchForArtist artist = do
     let uri = fromJust $ parseURI ("http://ws.spotify.com/search/1/artist.json?q=" ++ (urlify artist)) --append the users search term to find artist
     let req = Request {rqURI=uri, rqMethod=GET, rqHeaders=[], rqBody=""}
@@ -21,16 +23,19 @@ searchForArtist artist = do
     getFullArtist idExtract
     getArtistAlbums idExtract
 
-getFullArtist :: String -> IO FullArtist
+getFullArtist :: String -> IO ()
 getFullArtist artistID = do
     req <- parseUrl ("https://api.spotify.com/v1/artists/" ++ artistID)
     let settings = mkManagerSettings (TLSSettingsSimple True False False) Nothing
     resp <-withManagerSettings settings $ httpLbs req
     let body = responseBody resp
-    let decodeResult = decode body :: Maybe FullArtist
-    return (fromJust decodeResult) 
+    let decodeResult = fromJust (decode body :: Maybe FullArtist)
+    addArtistToDB  decodeResult
+    print "Finished getting Artist information"
+    --return (fromJust decodeResult) 
 
-getArtistAlbums :: String -> IO Tracks
+
+getArtistAlbums :: String -> IO ()
 getArtistAlbums artistID = do
     req <- parseUrl ("https://api.spotify.com/v1/artists/"++artistID++"/albums?album_type=album")
     let settings = mkManagerSettings (TLSSettingsSimple True False False) Nothing
@@ -40,22 +45,22 @@ getArtistAlbums artistID = do
     let albumList = fromJust decodeResult
     let uniqueAlbums = removeDoubles "" $ albums albumList
     --return albumList
+    print "Finished getting album information"
     getTracks (uniqueAlbums)
 
-getTracks:: [Album] -> IO Tracks
-getTracks [] = return (Tracks [])
+getTracks:: [Album] -> IO ()
+getTracks [] = return ()
 getTracks (album:albums) = do
     let albumNum = albumID album
-    print ("album: "++(albumName album))
     req <- parseUrl ("https://api.spotify.com/v1/albums/"++albumNum++"/tracks")
     let settings = mkManagerSettings (TLSSettingsSimple True False False) Nothing
     resp <-withManagerSettings settings $ httpLbs req
     let body = responseBody resp
     let decodeResult = decode body :: Maybe Tracks
     let tracklist = fromJust decodeResult
-    print $ trackName $ head $ tracks $ tracklist
+    --print $ trackName $ head $ tracks $ tracklist
+    print ("Finished getting track info for album: "++(albumName album))
     getTracks  albums
-    return tracklist
 
 urlify :: String -> String
 urlify [] = []
