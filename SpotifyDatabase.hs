@@ -1,4 +1,4 @@
-module SpotifyDatabase (checkArtistInDB,addArtistToDB, addAlbumToDB, addTracksToDB) where
+module SpotifyDatabase (getConnection, closeConnection, checkArtistInDB,addArtistToDB, addAlbumToDB, addTracksToDB) where
 
 import Control.Monad
 import Database.HDBC
@@ -13,19 +13,26 @@ mySQLInfo = defaultMySQLConnectInfo {
   mysqlPassword = "1234",
   mysqlUnixSocket = "/var/run/mysqld/mysqld.sock" 
 }
+getConnection :: IO Connection
+getConnection = do 
+  conn <- connectMySQL mySQLInfo
+  return conn
 
-checkArtistInDB:: String -> IO Bool
-checkArtistInDB stringID = do
-    conn <- connectMySQL mySQLInfo
+closeConnection :: Connection -> IO ()
+closeConnection conn = do
+  commit conn
+  disconnect conn
+
+checkArtistInDB:: String -> Connection -> IO Bool
+checkArtistInDB stringID conn = do
     genreList <- quickQuery' conn "SELECT * FROM Artists WHERE artistName = ?" [toSql stringID]
     if (length genreList) == 0 then return False
     else return True
     
 
 
-addArtistToDB:: FullArtist -> IO ()
-addArtistToDB artist = do
-    conn <- connectMySQL mySQLInfo
+addArtistToDB:: FullArtist -> Connection -> IO ()
+addArtistToDB artist conn = do
     let stmt = "INSERT INTO Artists (artistName,artistSpotifyID,artistFollowers,artistPopularity) VALUES (?, ?, ?, ?)"
     run conn stmt [toSql (name artist),
                    toSql (identifier artist),
@@ -33,8 +40,6 @@ addArtistToDB artist = do
                    toSql ((popularity artist)::Double)]
     artistList <- quickQuery' conn "SELECT * FROM Artists WHERE artistName = ?" [toSql (name artist)]
     addGenreToDB (genres artist) (fromSql $ head $ head $ artistList ::Int) conn
-    commit conn 
-    disconnect conn
 
 
 addGenreToDB:: [String] -> Int -> Connection -> IO ()
@@ -54,12 +59,9 @@ addGenreToDB (genre:genres) artistPos conn = do
         addGenreToDB genres artistPos conn
         return ()
 
-addAlbumToDB:: [Album] -> String -> IO ()
-addAlbumToDB albums artist = do
-    conn <- connectMySQL mySQLInfo
+addAlbumToDB:: [Album] -> String -> Connection -> IO ()
+addAlbumToDB albums artist conn = do
     addAlbums albums artist conn
-    commit conn 
-    disconnect conn 
     return ()
 
 addAlbums:: [Album] -> String -> Connection -> IO ()
@@ -87,14 +89,11 @@ addImagesToDB (image:images) albumPos conn = do
                    toSql (albumPos::Int)]
     addImagesToDB images albumPos conn
 
-addTracksToDB:: [Track] -> String -> IO ()
-addTracksToDB tracks albumId = do
-    conn <- connectMySQL mySQLInfo
+addTracksToDB:: [Track] -> String -> Connection -> IO ()
+addTracksToDB tracks albumId conn = do
     albumList <- quickQuery' conn "SELECT * FROM Albums WHERE albumSpotifyID = ?" [toSql (albumId)]
     let albumPos = (fromSql $ head $ head $ albumList ::Int)
-    addTracks tracks albumPos conn
-    commit conn 
-    disconnect conn 
+    addTracks tracks albumPos conn 
     return ()
 
 addTracks:: [Track] -> Int -> Connection -> IO ()
