@@ -46,18 +46,33 @@ extractTrackInfo ((name:url:_):rest) = (fromSql name,fromSql url) : (extractTrac
 
 createPageTest:: String -> IO ()
 createPageTest artist = do
-    idArtist <- getArtistID artist
+    idArtist   <- getArtistID artist
     albumPairs <- getAlbumInfo idArtist
-    trackPairs <- getTrackInfo (fst $ head albumPairs) 
+    albumText  <- outputAlbums albumPairs
     let html = unlines ["<html><head/><body>",
-                        "<p><h1>",
-                        (snd $ head albumPairs),
-                        "</h1></P>",
-                        "<p><h2>",
-                        (fst $ head trackPairs),
-                        "</h2></p>",
-                        "<audio controls> <source src=\"",
-                        (snd $ head trackPairs),
-                        "\" type=\"audio/mpeg\"",
+                        albumText,
                         "</body></html>"]
-    writeFile "test.html" html
+    writeFile "test2.html" html
+
+outputAlbums:: [(Int,String)] -> IO String
+outputAlbums [] = return ""
+outputAlbums (album:albums) = do 
+    trackPairs <- getTrackInfo (fst album)
+    remainingAlbums <- outputAlbums albums
+    return $ unlines ["<p><h1><center>",
+                      (snd album),
+                      "</h1></center></P>",
+                      (outputTracks trackPairs),
+                      remainingAlbums]
+
+outputTracks:: [(String,String)] -> String
+outputTracks [] = ""
+outputTracks (track:tracks) = unlines ["<p><h2>",
+                                       (fst track),
+                                       "</h2></p>",
+                                       "<audio controls> <source src=\"",
+                                       (snd track),
+                                       "\" type=\"audio/mpeg\">",
+                                       "Your browser does not support the audio element.",
+                                       "</audio>",
+                                       (outputTracks tracks)]
