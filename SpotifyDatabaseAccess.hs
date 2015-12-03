@@ -44,6 +44,12 @@ extractTrackInfo :: [[SqlValue]] -> [(String,String)]
 extractTrackInfo [] = [] 
 extractTrackInfo ((name:url:_):rest) = (fromSql name,fromSql url) : (extractTrackInfo rest)
 
+getImageURL :: Int -> IO String
+getImageURL album = do
+    conn <- getConnection
+    imageList <- quickQuery' conn "SELECT imageURL FROM Images WHERE albumID = ?" [toSql (album::Int)]
+    return $ fromSql $ head $ head imageList
+
 createPageTest:: String -> IO ()
 createPageTest artist = do
     idArtist   <- getArtistID artist
@@ -52,15 +58,20 @@ createPageTest artist = do
     let html = unlines ["<html><head/><body>",
                         albumText,
                         "</body></html>"]
-    writeFile "test2.html" html
+    writeFile (artist++".html") html
 
 outputAlbums:: [(Int,String)] -> IO String
 outputAlbums [] = return ""
 outputAlbums (album:albums) = do 
     trackPairs <- getTrackInfo (fst album)
     remainingAlbums <- outputAlbums albums
+    albumArtwork <- getImageURL (fst album)
     return $ unlines ["<p><h1><center>",
                       (snd album),
+                      "</h1></center></P>",
+                      "<p><center><img src=\"",
+                      albumArtwork,
+                      "\" alt=\"Album image\">",
                       "</h1></center></P>",
                       (outputTracks trackPairs),
                       remainingAlbums]
