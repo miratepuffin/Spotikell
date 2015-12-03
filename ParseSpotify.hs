@@ -10,8 +10,9 @@ import Data.Either.Extra
 import Database.HDBC as DB
 import Database.HDBC.MySQL as MYSQL
 import SpotifyDataTypes
-import SpotifyDatabase
+import SpotifyDatabaseSave
 import SpotifyDatabaseCreate
+import SpotifyDatabaseAccess
 import Data.Aeson
 
 searchForArtist :: String -> IO ()
