@@ -3,25 +3,9 @@ module SpotifyDatabaseSave (getConnection, closeConnection, checkArtistInDB,addA
 import Control.Monad
 import Database.HDBC
 import Database.HDBC.MySQL
+import MySqlConnect
 import SpotifyDataTypes
 
-mySQLInfo :: MySQLConnectInfo
-mySQLInfo = defaultMySQLConnectInfo {
-  mysqlHost = "localhost",
-  mysqlDatabase = "spotify",
-  mysqlUser = "root",
-  mysqlPassword = "1234",
-  mysqlUnixSocket = "/var/run/mysqld/mysqld.sock" 
-}
-getConnection :: IO Connection
-getConnection = do 
-  conn <- connectMySQL mySQLInfo
-  return conn
-
-closeConnection :: Connection -> IO ()
-closeConnection conn = do
-  commit conn
-  disconnect conn
 
 checkArtistInDB:: String -> Connection -> IO Bool
 checkArtistInDB stringID conn = do

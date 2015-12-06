@@ -4,27 +4,18 @@ import Control.Monad
 import Database.HDBC
 import Database.HDBC.MySQL
 import SpotifyDataTypes
-
-mySQLInfo :: MySQLConnectInfo
-mySQLInfo = defaultMySQLConnectInfo {
-  mysqlHost = "localhost",
-  mysqlDatabase = "spotify",
-  mysqlUser = "root",
-  mysqlPassword = "1234",
-  mysqlUnixSocket = "/var/run/mysqld/mysqld.sock" 
-}
+import MySqlConnect
 
 createDatabase :: IO ()
 createDatabase = do
-    conn <- connectMySQL mySQLInfo
+    conn <- getConnection
     createArtist conn
     createAlbums conn
     createImages conn
     createGenres conn
     createTracks conn
     createArtGen conn
-    commit conn
-    disconnect conn
+    closeConnection conn
 
 createArtist:: Connection -> IO Integer
 createArtist conn = run conn (unlines ["CREATE TABLE IF NOT EXISTS `Artists` (",

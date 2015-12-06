@@ -1,5 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-} --usual string syntax can be used for ByteString, Text, and other variations of string like types
 
+module ParseSpotify (searchForArtist) where 
+
 import Network.URI
 import Network.HTTP
 import Network.HTTP.Conduit
@@ -11,20 +13,15 @@ import Database.HDBC as DB
 import Database.HDBC.MySQL as MYSQL
 import SpotifyDataTypes
 import SpotifyDatabaseSave
-import SpotifyDatabaseCreate
-import SpotifyDatabaseAccess
+import MySqlConnect
 import Data.Aeson
 
 searchForArtist :: String -> IO ()
 searchForArtist artist = do
-    --search for the artist 
-    body <-getHTTPbody artist
-    -- convert the returned json data into an Info object                                                       
-    let decodeResult = decode body :: Maybe Info
-    --extract the id of the top search result                                              
-    let topArtist = head $ artists $ fromJust decodeResult
-    --cut off the spotify application specific address
-    let idExtract = drop 15 $ href' topArtist
+    body <-getHTTPbody artist --search for the artist                                                        
+    let decodeResult = decode body :: Maybe Info     -- convert the returned json data into an Info object                                            
+    let topArtist = head $ artists $ fromJust decodeResult --extract the id of the top search result  
+    let idExtract = drop 15 $ href' topArtist --cut off the spotify application specific address
     -- get the name of the artist as stored on the API                                                 
     let artistName' = name' topArtist
     --create the connection object which will be parsed through all of the add methods
