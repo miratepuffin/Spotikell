@@ -3,29 +3,37 @@ module SpotifyCreatePage (createPage) where
 import SpotifyDatabaseAccess
 import Data.List.Split
 
-createPage:: String -> IO ()
+createPage:: String -> IO String
 createPage artist = do
     idArtist   <- getArtistID artist
-    albumPairs <- getAlbumInfo idArtist
-    albumText  <- outputAlbums albumPairs
-    let html = unlines ["<html>",
-                        (createHeader artist),
-                        "<body>",
-                        "<p><center><h1>",artist," Album Preview","</h1></center></p>",
-                        "<div id=\"accordion\">",
-                        albumText,
-                        "</body></html>"]
-    let htmlRedux = rmvBlankLines $ splitOn "\n" html
-    writeFile ("CreatedHTML/"++artist++".html") htmlRedux
+    if idArtist == (-1) then return "Artist Not found, try someone else"
+    else do  
+      albumPairs <- getAlbumInfo idArtist
+      albumText  <- outputAlbums albumPairs
+      let html = unlines ["<html>",
+                          (createHeader artist),
+                          "<body>",
+                          "<p><center><h1>",artist," Album Preview","</h1></center></p>",
+                          "<div id=\"accordion\">",
+                          albumText,
+                          "</body></html>"]
+      let htmlRedux = rmvBlankLines $ splitOn "\n" html
+    --writeFile ("CreatedHTML/"++artist++".html") htmlRedux
+      return htmlRedux
 
 createHeader :: String -> String
 createHeader artist = unlines ["<head>",
   "<meta charset=\"utf-8\">",
   "<title>"++artist++" Preview</title>",
-  "<link rel= \"stylesheet\" href=\"jquery-ui.css\">",
+  "<link rel=\"stylesheet\" href=\"http://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css\">",
+  "<style>",
+  "body {font-family: \"Palatino Linotype\", \"Book Antiqua\", Palatino, serif;}",
+  ".album {font-size: 20pt !important;font-family: \"Palatino Linotype\", \"Book Antiqua\", Palatino, serif;}",
+  ".innerDiv {display: flex;align-items: center;}",
+  "h4 {font-family: \"Palatino Linotype\", \"Book Antiqua\", Palatino, serif;}",
+  "</style>",
   "<script src=\"http://code.jquery.com/jquery-1.10.2.js\"></script>",
   "<script src=\"http://code.jquery.com/ui/1.11.4/jquery-ui.js\"></script>",
-  --"<link rel=\"stylesheet\" href=\"/resources/demos/style.css\">",
   "<script>",
   "$(function() {",
   "$( \"#accordion\" ).accordion();",
@@ -57,7 +65,7 @@ outputTracks (track:tracks) rowCount | rowCount == 1 = "<tr><td>"++(insideTD tra
 outputTracks (track:tracks) rowCount | rowCount == 2 = "<td>"    ++(insideTD track) ++ "</td>"      ++ (outputTracks tracks 3)
 outputTracks (track:tracks) rowCount | rowCount == 3 = "<td>"    ++(insideTD track) ++ "</td></tr>" ++ (outputTracks tracks 1) 
 
-insideTD :: String
+insideTD :: (String,String) -> String
 insideTD track = unlines ["<p><center><h4>",
                            (fst track),
                            "</h4></p>",
