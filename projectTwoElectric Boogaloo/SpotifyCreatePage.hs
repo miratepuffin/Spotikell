@@ -1,49 +1,40 @@
 module SpotifyCreatePage (createPage) where
 
 import SpotifyDatabaseAccess
+import ParseSpotify
 import Data.List.Split
 
 createPage:: String -> IO String
 createPage artist = do
-    idArtist   <- getArtistID artist
-    if idArtist == (-1) then return "Artist Not found, try someone else"
-    else do  
-      albumPairs <- getAlbumInfo idArtist
-      albumText  <- outputAlbums albumPairs
-      let html = unlines ["<html>",
-                          (createHeader artist),
-                          "<body>",
-                          "<p><center><h1>",artist," Album Preview","</h1></center></p>",
-                          "<div id=\"accordion\">",
-                          albumText,
-                          "</body></html>"]
-      let htmlRedux = rmvBlankLines $ splitOn "\n" html
-    --writeFile ("CreatedHTML/"++artist++".html") htmlRedux
-      return htmlRedux
+    print artist
+    fstCheck   <- getArtistID artist
+    if fstCheck == (-1) then do
+      searchForArtist artist
+      sndCheck <- getArtistID artist
+      if sndCheck == (-1) then do
+        return "This artist is unavailable on spotify"
+      else  pageBuilder artist sndCheck
+    else  pageBuilder artist fstCheck
+      
+pageBuilder:: String -> Int -> IO String
+pageBuilder artist idArtist = do
+  print 1
+  albumPairs <- getAlbumInfo idArtist
+  print 2
+  albumText  <- outputAlbums albumPairs
+  print 3
+  htmlHead   <- readFile "header.html" 
+  let html = unlines ["<html>",htmlHead,
+  --"<body>",
+                      "<p><center><h1>",artist," Album Preview","</h1></center></p>",
+                      createSearchBar,
+                      "<div id=\"accordion\">",albumText,"</body></html>"]
+  print 4
+  let htmlRedux = rmvBlankLines $ splitOn "\n" html
+  return htmlRedux
 
-createHeader :: String -> String
-createHeader artist = unlines ["<head>",
-  "<meta charset=\"utf-8\">",
-  "<title>"++artist++" Preview</title>",
-  "<link rel=\"stylesheet\" href=\"http://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css\">",
-  "<style>",
-  "body {font-family: \"Palatino Linotype\", \"Book Antiqua\", Palatino, serif;}",
-  ".album {font-size: 20pt !important;font-family: \"Palatino Linotype\", \"Book Antiqua\", Palatino, serif;}",
-  ".innerDiv {display: flex;align-items: center;}",
-  "h4 {font-family: \"Palatino Linotype\", \"Book Antiqua\", Palatino, serif;}",
-  "</style>",
-  "<script src=\"http://code.jquery.com/jquery-1.10.2.js\"></script>",
-  "<script src=\"http://code.jquery.com/ui/1.11.4/jquery-ui.js\"></script>",
-  "<script>",
-  "$(function() {",
-  "$( \"#accordion\" ).accordion();",
-  "$(\"#accordion\").show().accordion({autoHeight: false});",
-  "$(\"#accordion div\").css({ 'height': 'auto' });",
-  "$( \"#accordion\" ).accordion({collapsible: true});",
-  "$( \"#accordion\" ).accordion({active: false});",
-  "});",
-  "</script>",
-  "</head>"] 
+createSearchBar :: String
+createSearchBar = unlines []
 
 outputAlbums:: [(Int,String)] -> IO String
 outputAlbums [] = return ""
