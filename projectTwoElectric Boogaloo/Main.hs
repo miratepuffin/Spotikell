@@ -6,7 +6,7 @@ import Network.HTTP.Types (status200)
 import qualified Data.ByteString.Lazy.Char8 as BU
 import Data.Text (unpack)
 import Data.Monoid
-import SpotifyCreatePage
+import GenerateHTML
 import Data.String.Conversions 
 main = do
     let port = 3000
