@@ -4,10 +4,10 @@ import Database.HDBC.MySQL
 
 mySQLInfo :: MySQLConnectInfo
 mySQLInfo = defaultMySQLConnectInfo {
-  mysqlHost = "localhost",
+  mysqlHost = "spotikell.cp3m1q1ydb0h.eu-west-1.rds.amazonaws.com",
   mysqlDatabase = "spotify",
   mysqlUser = "root",
-  mysqlPassword = "1234",
+  mysqlPassword = "12345678",
   mysqlUnixSocket = "/var/run/mysqld/mysqld.sock" 
 }
 getConnection :: IO Connection

@@ -8,8 +8,11 @@ import MySqlConnect
 
 createDatabase :: IO ()
 createDatabase = do
+    print "Test"
     conn <- getConnection
+    print "Test2"
     createArtist conn
+    print "Test3"
     createAlbums conn
     createImages conn
     createGenres conn
