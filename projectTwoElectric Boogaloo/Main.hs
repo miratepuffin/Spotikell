@@ -15,7 +15,7 @@ main = do
 
 app :: Application
 app req respond = do
-	print "got the message"
-    html <- createPage (head $ map unpack $ pathInfo req) 
+    html <- (createPage (head $ map unpack $ pathInfo req));
+	print "got the message" 
     respond $ responseLBS status200 [("Content-Type", "text/HTML")] (BU.pack html)
  
