@@ -74,8 +74,8 @@
   var submitForm = document.getElementById("tfnewsearch");
   var submitButton = document.getElementById("submt")
   function changePage () {
-    var localhost = "http://localhost/";
-    var amazon = "http://52.18.113.134/";
+    var localhost = "http://localhost:3000/";
+    var amazon = "http://52.18.113.134:3000/";
     var artist = submitText.value;
     //window.location = amazon.concat(artist);
     window.location = localhost.concat(artist);
@@ -95,3 +95,4 @@
     </form>
     <div class="tfclear"></div>
   </div>
+  <p> <center><h2>Unfortunetly, this artist or their album information is not available on Spotify, please try some else</h2></center>

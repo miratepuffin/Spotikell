@@ -12,7 +12,7 @@ createPage artist = do
       parseArtist artist
       sndCheck <- getArtistID artist
       if sndCheck == (-1) then do
-        return "This artist is unavailable on spotify"
+        readFile "HTML/NoArtist.html"
       else  pageBuilder artist sndCheck
     else  pageBuilder artist fstCheck
       
@@ -20,7 +20,7 @@ pageBuilder:: String -> Int -> IO String
 pageBuilder artist idArtist = do
   albumPairs <- getAlbumInfo idArtist
   albumText  <- outputAlbums albumPairs
-  htmlHead   <- readFile "header.html" 
+  htmlHead   <- readFile "HTML/header.html" 
   let html = unlines ["<html>",htmlHead,
                       "<p><center><h1>",artist," Album Preview","</h1></center></p>",
                       "<div id=\"accordion\">",albumText,"</body></html>"]
@@ -33,7 +33,7 @@ outputAlbums (album:albums) = do
     remainingAlbums <- outputAlbums albums
     albumArtwork <- getImageURL (fst album)
     return $ unlines ["<h3 class=\"album\">","<div class=\"innerDiv\">",
-                      "<img src=\"",albumArtwork,"\" height=\"20%\">",(snd album),
+                      "<img src=\"",albumArtwork,"\" height=\"20%\" >",(snd album),
                       "</div></h3><div><center><table cellspacing=\"15pt\" cellpadding=\"15pt\">",
                       (outputTracks trackPairs 1),"</table></center></div>",remainingAlbums]
 
