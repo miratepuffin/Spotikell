@@ -12,7 +12,7 @@ mySQLInfo = defaultMySQLConnectInfo {
 }
 --remote database on amazon
 mySQLInfo' :: MySQLConnectInfo
-mySQLInfo = defaultMySQLConnectInfo {
+mySQLInfo' = defaultMySQLConnectInfo {
   mysqlHost = "spotikell.cp3m1q1ydb0h.eu-west-1.rds.amazonaws.com",
   mysqlDatabase = "spotify",
   mysqlUser = "root",
