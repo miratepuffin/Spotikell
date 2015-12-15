@@ -5,6 +5,7 @@ import ParseSpotify
 import Data.List.Split
 
 createPage:: String -> IO String
+createPage "favicon.ico" = return "" --stops requests for small icon in tab
 createPage artist = do
     fstCheck   <- getArtistID artist
     if fstCheck == (-1) then do

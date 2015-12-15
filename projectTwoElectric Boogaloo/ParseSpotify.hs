@@ -14,6 +14,7 @@ import Database.HDBC.MySQL as MYSQL
 import SpotifyDataTypes
 import SaveToDB
 import MySqlConnect
+import Control.Exception
 import Data.Aeson
 
 parseArtist :: String -> IO ()
@@ -21,7 +22,7 @@ parseArtist artist = do
     body <-getHTTPbody artist
     let artistInfo = extractArtist body artist
     let artistName = snd artistInfo
-    let artistID   = fst artistInfo 
+    let artistID   = fst artistInfo
     conn <- getConnection
     artistInDB <- checkArtistInDB artistName conn
     if artistInDB || artistID == "NULLARTIST" then return ()
@@ -47,15 +48,19 @@ getArtistAlbums artistID artistName' conn = do
     addAlbumToDB uniqueAlbums artistName' conn
     getTracks (uniqueAlbums) conn
 
+
 getTracks:: [Album] -> MYSQL.Connection -> IO ()
 getTracks [] conn = return () 
 getTracks (album:albums) conn = do
     let albumNum = albumID album
     body <- getHTTPSbody ("https://api.spotify.com/v1/albums/"++albumNum++"/tracks")
     let decodeResult = decode body :: Maybe Tracks
-    let tracklist = fromJust decodeResult
-    addTracksToDB (tracks tracklist) albumNum conn
+    trackSuccessCheck decodeResult albumNum conn
     getTracks albums conn
+
+trackSuccessCheck:: Maybe Tracks -> String -> MYSQL.Connection -> IO()
+trackSuccessCheck (Just tracklist) albumNum conn = addTracksToDB (tracks tracklist) albumNum conn
+trackSuccessCheck Nothing albumNum conn           = print ("Broken Album: "++albumNum)
 
 --getHTTPSbody :: String -> IO Data.ByteString.Lazy.Internal.ByteString
 getHTTPSbody url = do
@@ -67,10 +72,10 @@ getHTTPSbody url = do
 
 --getHTTPbody:: String -> IO Data.ByteString.Lazy.Internal.ByteString
 getHTTPbody artist = do
-    let uri = fromJust $ parseURI ("http://ws.spotify.com/search/1/artist.json?q=" ++ (urlify artist))
-    let req = Request {rqURI=uri, rqMethod=GET, rqHeaders=[], rqBody=""}
-    resp <-simpleHTTP req                                                                     
-    let body = rspBody $ fromRight resp 
+    req <- parseUrl ("http://ws.spotify.com/search/1/artist.json?q=\"" ++ (urlify artist)++"\"")
+    manager <- newManager tlsManagerSettings
+    resp <-httpLbs req manager
+    let body = responseBody resp
     return body
 
 

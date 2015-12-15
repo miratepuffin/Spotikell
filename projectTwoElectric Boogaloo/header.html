@@ -75,8 +75,10 @@
   var submitButton = document.getElementById("submt")
   function changePage () {
     var localhost = "http://localhost:3000/";
+    var amazon = "http://52.18.113.134:3000/";
     var artist = submitText.value;
-    window.location = localhost.concat(artist);
+    window.location = amazon.concat(artist);
+    //window.location = localhost.concat(artist);
   }
   submitButton.addEventListener("click", changePage);
     
