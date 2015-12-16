@@ -77,21 +77,33 @@
     var localhost = "http://localhost/";
     var amazon = "http://52.18.113.134/";
     var artist = submitText.value;
-    window.location = amazon.concat(artist);
-    //window.location = localhost.concat(artist);
+    //window.location = amazon.concat(artist);
+    window.location = localhost.concat(artist);
 
   }
   submitButton.addEventListener("click", changePage);
-    
+  var url = window.location.search;
+  url = url.replace("?artist=", '');
+  url = url.replace("?", '');
+  while (url.indexOf("+")!=(-1)){
+     url = url.replace("+", ' ');
+  }
+  if(url.length > 0){
+    var localhost = "http://localhost/";
+    var amazon = "http://52.18.113.134/";
+    //window.location = amazon.concat(url);
+    window.location = localhost.concat(url);
+  }
+
   });
   </script>
   </head>
   <body>
   <!-- HTML for SEARCH BAR -->
   <div id="tfheader">
-    <form id="tfnewsearch" onkeypress="return event.keyCode != 13;">
-            <input type="text" id="tfq" class="tftextinput2" size="21" maxlength="120">
-            <button type="button" id="submt" class="tfbutton2">Search For Artist</button>
+    <form id="tfnewsearch" action="http://localhost/" method="get">
+            <input type="text" name="artist" id="tfq" class="tftextinput2" size="21" maxlength="120">
+            <button type="submit" id="submt" class="tfbutton2">Search For Artist</button>
     </form>
     <div class="tfclear"></div>
   </div>
