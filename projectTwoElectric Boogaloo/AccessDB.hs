@@ -4,11 +4,10 @@ import Database.HDBC
 import Database.HDBC.MySQL
 import SpotifyDataTypes
 import MySqlConnect
-
 getArtistID :: String -> IO Int
 getArtistID artist = do
     conn <- getConnection
-    artistList <- quickQuery' conn "SELECT * FROM Artists WHERE artistName = ?" [toSql artist]
+    artistList <- quickQuery' conn "SELECT * FROM Artists WHERE LOWER(artistName) = LOWER(?)" [toSql artist]
     closeConnection conn
     if (length artistList) > 0 then return (fromSql $ head $ head artistList::Int)
     else return (-1)

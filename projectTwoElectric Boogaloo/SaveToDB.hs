@@ -43,15 +43,19 @@ addGenreToDB (genre:genres) artistPos conn = do
         return ()
 
 addAlbumToDB:: [Album] -> String -> Connection -> IO ()
-addAlbumToDB albums artist conn = do
-    addAlbums albums artist conn
-    return ()
-
-addAlbums:: [Album] -> String -> Connection -> IO ()
-addAlbums [] artist conn = return ()
-addAlbums (album:albums) artist conn = do
+addAlbumToDB [] artist conn = return ()
+addAlbumToDB (album:albums) artist conn = do
     artistList <- quickQuery' conn "SELECT * FROM Artists WHERE artistName = ?" [toSql (artist)]
     let artistId = fromSql $ head $ head $ artistList ::Int
+    let sameAlbums = "SELECT * FROM Albums WHERE LOWER(albumName) = LOWER(?) AND albumArtist = ?" 
+    albumList <- quickQuery' conn sameAlbums [toSql (albumName album), toSql (artistId::Int)]
+    if(albumList==[]) then do
+      addAlbum album artistId conn
+      addAlbumToDB albums artist conn
+    else addAlbumToDB albums artist conn
+
+addAlbum :: Album -> Int -> Connection -> IO ()
+addAlbum album artistId conn = do
     let stmt = "INSERT INTO Albums (albumName,albumSpotifyID,albumArtist) VALUES (?, ?, ?)"
     run conn stmt [toSql (albumName album),
                    toSql (albumID album),
@@ -59,8 +63,6 @@ addAlbums (album:albums) artist conn = do
     albumList <- quickQuery' conn "SELECT * FROM Albums WHERE albumSpotifyID = ?" [toSql (albumID album)]
     let albumPos = (fromSql $ head $ head $ albumList ::Int)
     addImagesToDB (albumImages album) albumPos conn
-    addAlbums albums artist conn
-    return ()
 
 addImagesToDB:: [Image] -> Int -> Connection -> IO ()
 addImagesToDB [] albumPos conn = return ()
@@ -75,9 +77,11 @@ addImagesToDB (image:images) albumPos conn = do
 addTracksToDB:: [Track] -> String -> Connection -> IO ()
 addTracksToDB tracks albumId conn = do
     albumList <- quickQuery' conn "SELECT * FROM Albums WHERE albumSpotifyID = ?" [toSql (albumId)]
-    let albumPos = (fromSql $ head $ head $ albumList ::Int)
-    addTracks tracks albumPos conn 
-    return ()
+    if(albumList==[]) then return ()
+    else do
+        let albumPos = (fromSql $ head $ head $ albumList ::Int)
+        addTracks tracks albumPos conn 
+        return ()
 
 addTracks:: [Track] -> Int -> Connection -> IO ()
 addTracks [] albumPos conn = return ()
