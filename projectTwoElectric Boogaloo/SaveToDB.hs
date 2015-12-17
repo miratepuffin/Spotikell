@@ -1,4 +1,4 @@
-module SaveToDB (getConnection, closeConnection, checkArtistInDB,addArtistToDB, addAlbumToDB, addTracksToDB) where
+module SaveToDB (checkArtistInDB,addArtistToDB, addAlbumToDB, addTracksToDB) where
 
 import Control.Monad
 import Database.HDBC

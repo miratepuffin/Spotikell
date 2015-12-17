@@ -103,4 +103,4 @@ getHTTPSbody url = do
 
 someException :: HttpException -> IO (Maybe a)
 someException (StatusCodeException s _ _) = 
-  putStrLn ((show . statusCode $ s) ++ " Exception has occured. Check the URL!") >> return Nothingock 
+  putStrLn ((show . statusCode $ s) ++ " Exception has occured. Check the URL!") >> return Nothing   --Prints the Broken url to terminal to be checked later
