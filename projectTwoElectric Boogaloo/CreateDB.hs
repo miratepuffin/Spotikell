@@ -6,6 +6,14 @@ import Database.HDBC.MySQL
 import SpotifyDataTypes
 import MySqlConnect
 
+{-| The createDatabase function is used to initialise the database for the server/project to run.
+    It assumes that there is already a database called Spotify as this is required for the 
+    MySql connection object.
+
+    The function itself runs six individual functions, one for each table required in the database.
+    Inside the file for this module you will see that each of these functions corresponds to running
+    a singular SQL command to build the table, and the details for these tables can either be found
+    there or in the project pdf. -}
 createDatabase :: IO ()
 createDatabase = do
     conn <- getConnection
