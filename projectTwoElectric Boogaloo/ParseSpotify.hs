@@ -23,7 +23,7 @@ import Network.HTTP.Types.Status   (statusCode)
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Lazy.Char8 as C
 
-{-| The parseArtist method takes an artist name as a string,
+{-| The parseArtist function takes an artist name as a string,
     and looks the artist up via the spotify search API. 
     If found, if gathers all the information about them, their
     albums and the tracks of those albums, storing the information
@@ -44,7 +44,7 @@ parseArtist artist = do
         closeConnection conn                                                                             --Commit the changes and close the DB connection
                                                                                                          --The same connection object is passed around so if an error occurs no changes are commited
 
-{- The getFullArtist method takes a spotify artistID and a connection object.
+{- The getFullArtist function takes a spotify artistID and a connection object.
    It queries the spotify artist RestAPI for the given ID, converts the returned
    JSON into a FullArtist object and saves it in the database  -}
 getFullArtist :: String -> MYSQL.Connection -> IO ()
@@ -54,7 +54,10 @@ getFullArtist artistID  conn = do
     let artistData = fromJust decodeResult
     addArtistToDB  artistData conn                                                                       --Pass the object to SaveTODB.hs to handle adding to database
 
-
+{- The getArtistAlbums  function takes an artist spotify ID the name of the artist
+   and a MYSQL connection object. It queries the spotify album API for information on 
+   the artists albums, adds this to the database and calls the getTracks function
+   passing the Album list-}
 getArtistAlbums :: String -> String -> MYSQL.Connection -> IO ()
 getArtistAlbums artistID artistName' conn = do
     body <- getHTTPSbody ("https://api.spotify.com/v1/artists/"++artistID++"/albums?album_type=album")  --Contact spotify album API with the given artist ID
@@ -64,7 +67,9 @@ getArtistAlbums artistID artistName' conn = do
     addAlbumToDB uniqueAlbums artistName' conn                                                          --Pass Albums list to SaveToDB.hs to handle saving albums to database.
     getTracks (uniqueAlbums) conn                                                                       --Pass Albums list to getTracks to download and store the songs from each album
 
-
+{-The getTracks function takes a list of Albums and a MYSQL connection object.
+  It works its way through the list, querying the spotify track API for each
+  albums songs. It then adds these to the database.-}
 getTracks:: [Album] -> MYSQL.Connection -> IO ()
 getTracks [] conn = return ()                                                                           --First check if the list is empty, to see if there are remaining albums to process
 getTracks (album:albums) conn = do
@@ -72,13 +77,18 @@ getTracks (album:albums) conn = do
     body <- getHTTPSbody ("https://api.spotify.com/v1/albums/"++albumNum++"/tracks")                    --Contact the spotify track API with the given album ID
     let decodeResult = decode body :: Maybe Tracks                                                      --Convert the returned JSON into a Tracks object (containing a list of Tracks)
     trackSuccessCheck decodeResult albumNum conn                                                        --Make sure the track data is not incorrect (many trash albums left in API) and save to DB if safe
-    getTracks albums conn                                                                               --Call the method again to parse the rest of the albums
+    getTracks albums conn                                                                               --Call the function again to parse the rest of the albums
 
+{-TrackSucesssCheck is a helper function to getTracks which makes sure that
+  the track data was parsed correctly. This is needed as a lot of albums
+  on the spotify api are trash and the data is not in the correct format-}
 trackSuccessCheck:: Maybe Tracks -> String -> MYSQL.Connection -> IO()
 trackSuccessCheck (Just tracklist) albumNum conn = addTracksToDB (tracks tracklist) albumNum conn       --If the Parse from JSON to Tracks was successful, pass the Tracks to SaveToDB.hs for saving
 trackSuccessCheck Nothing albumNum conn           = print ("Broken Album: "++albumNum)                  --Otherwise print the id of the broken album and move on
 
-
+{-ExtractArtist is a helper function for the parseArtist function. This checks
+  that an artist was returned from the search query, and if so returns the ID
+  and name. If there are no artists it returns "NULLARTIST"-}
 extractArtist:: BL.ByteString -> (String,String)
 extractArtist body = do
     let decodeResult = fromJust (decode body :: Maybe Info)                                             --Convert the JSON to an Info object
@@ -87,11 +97,16 @@ extractArtist body = do
          (drop 15 $ href' $ head artistList, name' $ head artistList)                                   --Retreve the Spotify Id of the artist by trimming the spotify href, and the name
     else ("NULLARTIST","NULLARTIST")                                                                    --Otherwise Return NULLARTIST
 
+{-"Urlify is just used to convert spaces into %20, this is because the spotify
+   api had some odd issues with trying to process normal spaces"-}
 urlify :: String -> String
 urlify [] = []                                                                                          --Check if there are still characters to process
 urlify (x:xs) | x == ' '  = '%':'2':'0':(urlify xs)                                                     --If the character is a space convert it into %20 for insertion into the api call
               | otherwise = x    :(urlify xs)                                                           --otherwise just return the character
 
+{-The getHTTPSbody function is used to access the JSON files in the Spotify API.
+  It takes a URL string, converts it into a HTTPS request and executes it. If the
+  request is successful it returns the body (The json) otherwise it returns "error"-}
 getHTTPSbody :: String -> IO BL.ByteString
 getHTTPSbody url = do
     req <- parseUrl url                                                                                 --Check that the URL is in a correct format
@@ -103,4 +118,4 @@ getHTTPSbody url = do
 
 someException :: HttpException -> IO (Maybe a)
 someException (StatusCodeException s _ _) = 
-  putStrLn ((show . statusCode $ s) ++ " Exception has occured. Check the URL!") >> return Nothing   --Prints the Broken url to terminal to be checked later
+  putStrLn ((show . statusCode $ s) ++ " Exception has occured. Check the URL!") >> return Nothing   --Prints the Broken url to terminal to be checked later and returns Nothing to be used in the case
