@@ -1,0 +1,20 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>SaveToDB</title><link href="ocean.css" rel="stylesheet" type="text/css" title="Ocean" /><script src="haddock-util.js" type="text/javascript"></script><script type="text/javascript">//<![CDATA[
+window.onload = function () {pageLoad();setSynopsis("mini_SaveToDB.html");};
+//]]>
+</script></head><body><div id="package-header"><ul class="links" id="page-menu"><li><a href="index.html">Contents</a></li><li><a href="doc-index.html">Index</a></li></ul><p class="caption empty">&nbsp;</p></div><div id="content"><div id="module-header"><table class="info"><tr><th>Safe Haskell</th><td>None</td></tr></table><p class="caption">SaveToDB</p></div><div id="synopsis"><p id="control.syn" class="caption expander" onclick="toggleSection('syn')">Synopsis</p><ul id="section.syn" class="hide" onclick="toggleSection('syn')"><li class="src short"><a href="#v:checkArtistInDB">checkArtistInDB</a> :: String -&gt; Connection -&gt; IO Bool</li><li class="src short"><a href="#v:addArtistToDB">addArtistToDB</a> :: <a href="SpotifyDataTypes.html#t:FullArtist">FullArtist</a> -&gt; Connection -&gt; IO ()</li><li class="src short"><a href="#v:addAlbumToDB">addAlbumToDB</a> :: [<a href="SpotifyDataTypes.html#t:Album">Album</a>] -&gt; String -&gt; Connection -&gt; IO ()</li><li class="src short"><a href="#v:addTracksToDB">addTracksToDB</a> :: [<a href="SpotifyDataTypes.html#t:Track">Track</a>] -&gt; String -&gt; Connection -&gt; IO ()</li></ul></div><div id="interface"><h1>Documentation</h1><div class="top"><p class="src"><a name="v:checkArtistInDB" class="def">checkArtistInDB</a> :: String -&gt; Connection -&gt; IO Bool</p><div class="doc"><p>The checkArtistInDB function takes an artist name as a string
+    and a Connection object. It then returns a boolean denoting 
+    weather of not the artist is contained within the artists table
+</p></div></div><div class="top"><p class="src"><a name="v:addArtistToDB" class="def">addArtistToDB</a> :: <a href="SpotifyDataTypes.html#t:FullArtist">FullArtist</a> -&gt; Connection -&gt; IO ()</p><div class="doc"><p>The addArtistToDB function Takes a FullArtist Object and a connection
+    object. It adds the FullArtist to the database, and calls teh addGenreToDB
+    function to deal with the artists genres
+</p></div></div><div class="top"><p class="src"><a name="v:addAlbumToDB" class="def">addAlbumToDB</a> :: [<a href="SpotifyDataTypes.html#t:Album">Album</a>] -&gt; String -&gt; Connection -&gt; IO ()</p><div class="doc"><p>The addAlbumToDB function takes a list of albums, the name of the artist
+    that the albums belong to, and a connection object. It firstly checks
+    if any of the albums are duplicates (as there are many in the spotify
+    api). For the albums for which this is not the case, it adds their 
+    information to the albums table, and their artwork to the images
+    table. 
+</p></div></div><div class="top"><p class="src"><a name="v:addTracksToDB" class="def">addTracksToDB</a> :: [<a href="SpotifyDataTypes.html#t:Track">Track</a>] -&gt; String -&gt; Connection -&gt; IO ()</p><div class="doc"><p>The addTracksToDB function takes a list of Tracks a spotiyf album
+    ID (String) and a connection object. It first checks that the album
+    ID is in the database (due to removing the doubles), and if it is
+    adds all of the tracks in the list into the tracks table.
+</p></div></div></div></div><div id="footer"><p>Produced by <a href="http://www.haskell.org/haddock/">Haddock</a> version 2.13.2</p></div></body></html>
