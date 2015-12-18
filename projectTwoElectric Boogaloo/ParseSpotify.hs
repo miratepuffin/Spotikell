@@ -97,12 +97,13 @@ extractArtist body = do
          (drop 15 $ href' $ head artistList, name' $ head artistList)                                   --Retreve the Spotify Id of the artist by trimming the spotify href, and the name
     else ("NULLARTIST","NULLARTIST")                                                                    --Otherwise Return NULLARTIST
 
-{-"Urlify is just used to convert spaces into %20, this is because the spotify
-   api had some odd issues with trying to process normal spaces"-}
+{-"Urlify is just used to convert spaces into %20, and & to %26
+   this is because the spotify api had some odd issues with trying
+   to process normal spaces, and you need to escape &"-}
 urlify :: String -> String
 urlify [] = []                                                                                          --Check if there are still characters to process
 urlify (x:xs) | x == ' '  = '%':'2':'0':(urlify xs)                                                     --If the character is a space convert it into %20 for insertion into the api call
-              | x == '&'  = '%':'2':'6':(urlify xs)
+              | x == '&'  = '%':'2':'6':(urlify xs)                                                     --If the character is an '&' then convert it into %20
               | otherwise = x    :(urlify xs)                                                           --otherwise just return the character
 
 {-The getHTTPSbody function is used to access the JSON files in the Spotify API.
