@@ -50,10 +50,14 @@ extractTrackInfo :: [[SqlValue]] -> [(String,String)]
 extractTrackInfo [] = []                                                                                                --If the list is empty, return empty list
 extractTrackInfo ((name:url:_):rest) = (fromSql name,fromSql url) : (extractTrackInfo rest)                             --Otherwise take the name and URL from each inner list, and convert from SQLValues to (String,String)
 
-{-| The getImageUrl function takes an Int (the album ID) and the artwork-}
+{-| The getImageUrl function takes an Int (the album ID) and returns
+    that albums artwork. If no artwork is available, then returns a 
+    default image-}
 getImageURL :: Int -> IO String
 getImageURL album = do
     conn <- getConnection                                                                                               --Get the database connection
     imageList <- quickQuery' conn "SELECT imageURL FROM Images WHERE albumID = ?" [toSql (album::Int)]                  --Query the Image table for the URL for the given album 
     closeConnection conn                                                                                                --Close the database connection
-    return $ fromSql $ head $ head imageList                                                                            --Take the first row returned (The biggest image), convert from SQLValue to string and return
+    if(length imageList > 0) then                                                                                       --Check if an image was present
+        return $ fromSql $ head $ head imageList                                                                        --If so, take the first row returned (The biggest image), convert from SQLValue to string and return
+    else return "https://cdn3.iconfinder.com/data/icons/abstract-1/512/no_image-512.png"                                --Otherwise return default image

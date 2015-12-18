@@ -102,6 +102,7 @@ extractArtist body = do
 urlify :: String -> String
 urlify [] = []                                                                                          --Check if there are still characters to process
 urlify (x:xs) | x == ' '  = '%':'2':'0':(urlify xs)                                                     --If the character is a space convert it into %20 for insertion into the api call
+              | x == '&'  = '%':'2':'6':(urlify xs)
               | otherwise = x    :(urlify xs)                                                           --otherwise just return the character
 
 {-The getHTTPSbody function is used to access the JSON files in the Spotify API.
